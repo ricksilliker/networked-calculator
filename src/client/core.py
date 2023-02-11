@@ -67,30 +67,43 @@ class CalculatorHandler(BaseHTTPRequestHandler):
         body = self.rfile.read(content_length)
 
         try:
-            re.
+            if re.match(EXPRESSION_PATTERN, body) is not None:
+                LOG.exception('Unknown characters found in expression.')
+                self.send_400('ERROR')
+                return
 
             solved_expression = eval(body)
-
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-
-            resp = {
-                'result': solved_expression
-            }
-
-            self.wfile.write(json.dumps(resp).encode(encoding='utf_8'))
+            self.send_200(solved_expression)
 
         except ZeroDivisionError:
-            self.send_response(400)
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
+            LOG.exception('Divide by zero.')
+            self.send_400("'Can't divide by 0")
+        except:
+            LOG.exception('Unexpected error.')
+            self.send_400("ERROR")
 
-            resp = {
-                'error': "'Can't divide by 0"
-            }
+    def send_400(self, msg):
+        self.send_response(400)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
 
-            self.wfile.write(json.dumps(resp).encode(encoding='utf_8'))
+        resp = {
+            'error': msg
+        }
+
+        self.wfile.write(json.dumps(resp).encode(encoding='utf_8'))
+
+    def send_200(self, result):
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+
+        resp = {
+            'result': result
+        }
+
+        self.wfile.write(json.dumps(resp).encode(encoding='utf_8'))
+
 
 def run_server():
     server = HTTPServer(('localhost', 5454), CalculatorHandler)
