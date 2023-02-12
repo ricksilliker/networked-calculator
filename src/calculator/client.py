@@ -1,6 +1,6 @@
 # client.py creates a console entry point to send a math expression to the server.
 import requests
-from . import logs, settings, models
+import logs, settings, models
 
 
 LOG = logs.create_logger(__name__, console=False)

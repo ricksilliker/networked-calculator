@@ -1,0 +1,17 @@
+QWidget {
+    color: #F5F5F5;
+    background-color: #232323;
+}
+
+QPushButton {
+    height: 50px;
+    width: 30px;
+    font-family: Helvitica, sans-serif;
+    font-size: 12pt;
+}
+
+QLineEdit {
+    padding: 20px 10px;
+    font-size: 16pt;
+    border: 0;
+}

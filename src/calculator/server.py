@@ -2,10 +2,11 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import re
-from . import logs, models, settings
+import logs, models, settings
 
 LOG = logs.create_logger(__name__)
-EXPRESSION_PATTERN = re.compile(r'[^\d\*\+\-\/\(\)\.]')
+EXPRESSION_PATTERN = re.compile(r'[^\d\*\+\-\/\(\)\.\%]')
+# TODO: Convert percent to decimal.
 
 
 class CalculatorHandler(BaseHTTPRequestHandler):
@@ -35,20 +36,23 @@ class CalculatorHandler(BaseHTTPRequestHandler):
                 LOG.exception(f'Illegal character(s) found in expression "{req.expression}"')
                 # Probably a good idea to just keep the error message that ends up in the client
                 # non-helpful. Just a little 'security by obscurity'.
-                self.send_400('ERROR')
+                self.send_400('Error')
                 return
 
             # eval should be safe here, since we only allow numbers, operators, parenthesis.
             solved_expression = eval(req.expression)
             self.send_200(solved_expression)
         except ZeroDivisionError:
-            LOG.exception('Divide by zero.')
+            LOG.error('Divide by zero.')
             self.send_400("Can't divide by 0")
+        except SyntaxError:
+            LOG.error('Formatting error.')
+            self.send_400('Format Error')
         except:
             # A simplistic message for non math errors. This should
             # cover anything that the regex expression missed.
             LOG.exception('Unexpected error.')
-            self.send_400('ERROR')
+            self.send_400('Error')
 
     def send_400(self, msg):
         '''Send the error message, this is the bath path.

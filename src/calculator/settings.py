@@ -1,10 +1,11 @@
 # settings.py manages the configurable data between the client and server.
+import os
 from dataclasses import dataclass
-from . import logs
+import logs
 
-
-DEFAULT_HOST = 'localhost'
-DEFAULT_PORT = 5454
+# Make these configurable for when the server runs in a container.
+DEFAULT_HOST = os.environ.get('TEST_HOST', 'localhost')
+DEFAULT_PORT = int(os.environ.get('TEST_PORT', 5454))
 LOG = logs.create_logger(__name__)
 
 
