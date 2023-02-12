@@ -1,3 +1,4 @@
+# settings.py manages the configurable data between the client and server.
 from dataclasses import dataclass
 from . import logs
 
