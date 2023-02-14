@@ -2,7 +2,7 @@ import sys
 import os
 import re
 from PySide2 import QtWidgets, QtCore, QtGui
-import client
+from calculator import client
 
 DIVIDE_CHAR = chr(247)
 MULTIPLY_CHAR = chr(215)
@@ -10,6 +10,7 @@ PERCENT_PATTERN = re.compile(r'(\d*\.?\d*\%)')
 
 
 class CalculatorWindow(QtWidgets.QMainWindow):
+    '''CalculatorWindow is a UI for the Client, based of the Android/Google calculator.'''
     def __init__(self, parent=None):
         super(CalculatorWindow, self).__init__(parent=parent)
 
@@ -112,6 +113,16 @@ class CalculatorWindow(QtWidgets.QMainWindow):
     #     return QtCore.QSize(350, 622)
 
     def add_number(self, v):
+        '''Add a character to the expression.
+
+        Args:
+            v: 0-9, '.' or '%'
+
+        Returns:
+            None
+        '''
+        self.clear_error()
+
         if self.expression:
             last_char = self.expression[-1]
             if v == '.':
@@ -129,6 +140,16 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.field.setText(self.expression)
 
     def add_operator(self, v):
+        '''Add an operator to the expression.
+
+        Args:
+            v: '-', '+', '*', or '/'
+
+        Returns:
+            None
+        '''
+        self.clear_error()
+
         if not self.expression:
             # Only subtract op can be added to an empty expression for signs.
             if v == '-':
@@ -149,14 +170,31 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.field.setText(self.expression)
 
     def delete_character(self):
+        '''Remove the last character of the expression.
+
+        Returns:
+            None
+        '''
         self.expression = self.expression[:-1]
         self.field.setText(self.expression)
 
     def clear_all(self):
+        '''Clear all characters from the expression.
+
+        Returns:
+            None
+        '''
         self.expression = ''
         self.field.setText('')
 
     def add_parenthesis(self):
+        '''Add parentheses based on the current expression state.
+
+        Returns:
+            None
+        '''
+        self.clear_error()
+
         char = '('
 
         start_count = self.expression.count('(')
@@ -174,6 +212,11 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         self.field.setText(self.expression)
 
     def submit_expression(self):
+        '''Send the expression to the server for solving.
+
+        Returns:
+            None
+        '''
         def _replace_percent(obj):
             print(obj.group(0))
             return str(float(obj.group(0)[:-1]) / 100)
@@ -182,8 +225,18 @@ class CalculatorWindow(QtWidgets.QMainWindow):
         e = PERCENT_PATTERN.sub(_replace_percent, e)
         e = e.replace(MULTIPLY_CHAR, '*')
         e = e.replace(DIVIDE_CHAR, '/')
-        print(e)
-        #self.client.run(e)
+        answer = self.client.run(e)
+        self.expression = answer
+        self.field.setText(self.expression)
+
+    def clear_error(self):
+        '''Clear an error message.
+
+        Returns:
+            None
+        '''
+        if self.expression == 'ERROR':
+            self.expression = ''
 
 
 if __name__ == '__main__':

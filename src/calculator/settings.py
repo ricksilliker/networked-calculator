@@ -1,7 +1,7 @@
 # settings.py manages the configurable data between the client and server.
 import os
 from dataclasses import dataclass
-import logs
+from calculator import logs
 
 # Make these configurable for when the server runs in a container.
 DEFAULT_HOST = os.environ.get('TEST_HOST', 'localhost')
@@ -13,6 +13,7 @@ LOG = logs.create_logger(__name__)
 class Settings(object):
     host: str = DEFAULT_HOST
     port: int = DEFAULT_PORT
+    timeout: int = 15
 
     def __post_init__(self):
         if self.host is None:

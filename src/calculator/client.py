@@ -1,6 +1,6 @@
 # client.py creates a console entry point to send a math expression to the server.
 import requests
-import logs, settings, models
+from calculator import logs, settings, models
 
 
 LOG = logs.create_logger(__name__, console=False)
@@ -27,7 +27,7 @@ class Client(object):
 
         req = models.ExpressionRequest(expression=expression)
 
-        resp = requests.post(server_addr, json=req.serialize())
+        resp = requests.post(server_addr, json=req.serialize(), timeout=self.settings.timeout)
         if resp.status_code == 200:
             LOG.info(f"Expression solved: {expression} - Answer: {resp.json()['answer']}")
             return str(resp.json()['answer'])

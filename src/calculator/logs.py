@@ -22,6 +22,7 @@ def create_logger(name, level=logging.INFO, console=True):
 
     # Create a log file in the current working directory, should be
     # wherever the client/server are launched from.
+    print(os.getcwd())
     log_filepath = os.path.join(os.getcwd(), '.data', 'calculator.log')
     if not os.path.exists(os.path.dirname(log_filepath)):
         os.makedirs(os.path.dirname(log_filepath), exist_ok=True)

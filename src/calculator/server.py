@@ -1,8 +1,9 @@
 # server.py creates and runs a simple http server that evaluates a math expression.
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import re
-import logs, models, settings
+import multiprocessing
+from calculator import logs, models, settings
 
 LOG = logs.create_logger(__name__)
 EXPRESSION_PATTERN = re.compile(r'[^\d\*\+\-\/\(\)\.\%]')
@@ -11,6 +12,10 @@ EXPRESSION_PATTERN = re.compile(r'[^\d\*\+\-\/\(\)\.\%]')
 
 class CalculatorHandler(BaseHTTPRequestHandler):
     '''CalculatorHandler manages the http request for the server.'''
+
+    def __init__(self):
+        super(CalculatorHandler, self).__init__()
+        self.settings = settings.Settings()
 
     def do_POST(self):
         '''Handle POST requests. Possible status codes are 200 and 400.
@@ -26,6 +31,7 @@ class CalculatorHandler(BaseHTTPRequestHandler):
         body = json.loads(self.rfile.read(content_length))
 
         req = models.ExpressionRequest(**body)
+        LOG.info(f'Received request - {body}')
 
         try:
             # Use search here instead of match because it seems to cover
@@ -40,8 +46,17 @@ class CalculatorHandler(BaseHTTPRequestHandler):
                 return
 
             # eval should be safe here, since we only allow numbers, operators, parenthesis.
-            solved_expression = eval(req.expression)
-            self.send_200(solved_expression)
+            # Also, using multiprocessing to kill expressions that take too long to calculate (greater than 1 minute).
+            with multiprocessing.Pool() as pool:
+                result = pool.apply_async(eval, [req.expression])
+                try:
+                    solved_expression = result.get(timeout=self.settings.timeout * 4)
+                    LOG.info(f'Solved expression - {solved_expression}')
+                    self.send_200(solved_expression)
+                except multiprocessing.TimeoutError:
+                    self.send_400('Error')
+                    return
+
         except ZeroDivisionError:
             LOG.error('Divide by zero.')
             self.send_400("Can't divide by 0")
@@ -94,7 +109,7 @@ def run_server():
 
     try:
         s = settings.Settings()
-        server = HTTPServer((s.host, s.port), CalculatorHandler)
+        server = ThreadingHTTPServer((s.host, s.port), CalculatorHandler)
         LOG.info(f'Starting server @{s.server_address()}..')
         server.serve_forever()
     except KeyboardInterrupt:
