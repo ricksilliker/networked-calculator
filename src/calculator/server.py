@@ -13,9 +13,10 @@ EXPRESSION_PATTERN = re.compile(r'[^\d\*\+\-\/\(\)\.\%]')
 class CalculatorHandler(BaseHTTPRequestHandler):
     '''CalculatorHandler manages the http request for the server.'''
 
-    def __init__(self):
-        super(CalculatorHandler, self).__init__()
+    def __init__(self, request, client_address, server):
+        super(CalculatorHandler, self).__init__(request, client_address, server)
         self.settings = settings.Settings()
+        print(str(request))
 
     def do_POST(self):
         '''Handle POST requests. Possible status codes are 200 and 400.
