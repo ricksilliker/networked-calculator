@@ -6,17 +6,12 @@ import multiprocessing
 from calculator import logs, models, settings
 
 LOG = logs.create_logger(__name__)
-EXPRESSION_PATTERN = re.compile(r'[^\d\*\+\-\/\(\)\.\%]')
+EXPRESSION_PATTERN = re.compile(r'[^\d\*\+\-\/\(\)\.\%\ ]')
 # TODO: Convert percent to decimal.
 
 
 class CalculatorHandler(BaseHTTPRequestHandler):
     '''CalculatorHandler manages the http request for the server.'''
-
-    def __init__(self, request, client_address, server):
-        super(CalculatorHandler, self).__init__(request, client_address, server)
-        self.settings = settings.Settings()
-        print(str(request))
 
     def do_POST(self):
         '''Handle POST requests. Possible status codes are 200 and 400.
@@ -51,7 +46,7 @@ class CalculatorHandler(BaseHTTPRequestHandler):
             with multiprocessing.Pool() as pool:
                 result = pool.apply_async(eval, [req.expression])
                 try:
-                    solved_expression = result.get(timeout=self.settings.timeout * 4)
+                    solved_expression = result.get(timeout=60)
                     LOG.info(f'Solved expression - {solved_expression}')
                     self.send_200(solved_expression)
                 except multiprocessing.TimeoutError:
@@ -110,6 +105,7 @@ def run_server():
 
     try:
         s = settings.Settings()
+        # Use ThreadingHTTPServer over the standard one to handle multiple requests at a time.
         server = ThreadingHTTPServer((s.host, s.port), CalculatorHandler)
         LOG.info(f'Starting server @{s.server_address()}..')
         server.serve_forever()

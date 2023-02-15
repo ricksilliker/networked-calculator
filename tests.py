@@ -1,46 +1,33 @@
-from calculator import server, client
-from io import BytesIO
+import pytest
+import multiprocessing
+from calculator import server
+import requests
+from http.server import HTTPServer
 
 
-class MockSocket(object):
-    def getsockname(self):
-        return ('sockname',)
+def create_server():
+    s = HTTPServer(('localhost', 5454), server.CalculatorHandler)
+    s.serve_forever()
 
 
-class MockRequest(object):
-    _sock = MockSocket()
-
-    def __init__(self, path):
-        self._path = path
-
-    def makefile(self, *args, **kwargs):
-        if args[0] == 'rb':
-            return BytesIO(b"GET %s HTTP/1.0" % self._path)
-        elif args[0] == 'wb':
-            return BytesIO(b'')
-        else:
-            raise ValueError("Unknown file type to make", args, kwargs)
+@pytest.fixture(autouse=True, scope='session')
+def start_server():
+    proc = multiprocessing.Process(target=create_server)
+    proc.start()
+    yield
+    proc.terminate()
 
 
 class TestServer:
     def test_perform_calculation(self):
-        req = {'expression': '8 / 2 * (2 + 2)'}
-        handler = server.CalculatorHandler(MockRequest(b'/'), (0, 0), None)
-        print(handler.wfile.getvalue())
+        test_expressions = [
+            dict(req={'expression': '5 + 5 - 1 '}, status_code=200),  # good with spaces
+            dict(req={'expression': '8/2*(2+2)'}, status_code=200),  # clean/good expression
+            dict(req={'expression': '5/0'}, status_code=400),  # divide by zero error
+            dict(req={'expression': '9**9**9'}, status_code=400),  # large calculation error
+            dict(req={'expression': '9+1(-'}, status_code=400)  # syntax error
+        ]
 
-    def test_expression_validation(self):
-        pass
-
-    def test_send_results(self):
-        pass
-
-
-class TestClient:
-    def test_good_response(self):
-        pass
-
-    def test_bad_response(self):
-        pass
-
-    def test_unknown_response(self):
-        pass
+        for expr in test_expressions:
+            resp = requests.post('http://localhost:5454/', json=expr['req'])
+            assert resp.status_code == expr['status_code']

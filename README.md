@@ -1,7 +1,11 @@
 # Networked Calculator
 
 A simple calculator that sends an expression to a server and returns the result to the client.
-TODO: why choose http server
+I chose to use an HTTP protocol because of how familiar/comfortable I am using with it, and how easy they
+are to setup. I also tried to keep the dependencies to a minimum. I knew I didn't want to make my own
+request objects because of the scope of that task, so the only dependency other than PySide2 for the UI is requests.
+If I want to scale this out I would probably go with a WSGI config and nginx to setup some sort of basic load balancing,
+but for this simple use case the ThreadingHTTPServer is good enough at managing multiple client requests.
 
 ## Install Instructions
 
@@ -19,20 +23,23 @@ to install the base requirements. Now you're ready to go.
 ### From pip
 
 Optionally you can use pip in your environement and `cd` into
-networked-calculator directory and run `pip setup.py`
+networked-calculator directory and run `python setup.py install`
 
 
 ## How to Run
 
 **Run the server**
-From the `src` directory run `python -m calculator.server`
+From the `src` directory run `python -m calculator.server` or `calculator-server` if installed with `setup.py`
 
 **Run the client**
-From the `src` directory run `python -m calculator.client`
+From the `src` directory run `python -m calculator.client` or `calculator-client` if installed with `setup.py`
 
 **Run the client with PySide UI**
 From the `src` directory run `python -m calculator.view`
 
+**Run the Dockerfile server**
+Run `docker build -t networked-calculator .` to build
+Then `docker run -dp 5454:5454 networked-calculator` to run
 
 ## Limitations/Caveats
 
