@@ -47,4 +47,5 @@ These are just things I probably could implement, but seemed outside the scope o
 
 - (UI) - The minus/subtract button is also used for changing the sign of a number, dunno why Android does this, probably easier to just make a dedicated button for changing signs.
 - (Server) - Really really big numbers are tough on Python in general (try 9**9**9), so right now it just times out versus waiting for the solve after 60s.
+- (Server) - Because of the multiprocessing I introduced to enable killing requests, I'm pretty sure I introduced some slowness which I believe is just related to the timeout length.
 - (Client) - Double operators are useful to use for things like exponents, changing signs, etc, but there are instances where they can be problematic, and the UI doesn't support them.
